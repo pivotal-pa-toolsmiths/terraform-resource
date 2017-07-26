@@ -49,6 +49,8 @@ var _ = Describe("Out", func() {
 		stateFilePath = path.Join(bucketPath, fmt.Sprintf("%s.tfstate", envName))
 		s3ObjectPath = path.Join(bucketPath, helpers.RandomString("out-test"))
 
+		os.Setenv("BUILD_ID", "sample-build-id") 
+
 		storageModel = storage.Model{
 			Bucket:          bucket,
 			BucketPath:      bucketPath,
@@ -79,6 +81,37 @@ var _ = Describe("Out", func() {
 		_ = os.RemoveAll(workingDir)
 		awsVerifier.DeleteObjectFromS3(bucket, s3ObjectPath)
 		awsVerifier.DeleteObjectFromS3(bucket, stateFilePath)
+	})
+
+	It("creates build information as variables", func() {
+		req := models.OutRequest{
+			Source: models.Source{
+				Storage: storageModel,
+			},
+			Params: models.OutParams{
+				EnvName: envName,
+				Terraform: models.Terraform{
+					Source: "fixtures/aws/",
+					Vars: map[string]interface{}{
+						"access_key":     accessKey,
+						"secret_key":     secretKey,
+						"bucket":         bucket,
+						"object_key":     s3ObjectPath,
+						"object_content": "terraform-is-neat",
+						"region":         region,
+					},
+				},
+			},
+		}
+		expectedMetadata := map[string]string{
+			"env_name":    envName,
+			"build_id": "sample-build-id",
+			"content_md5": calculateMD5("terraform-is-neat"),
+		}
+		fmt.Println(req)
+		assertOutBehavior(req, expectedMetadata)
+
+		awsVerifier.ExpectS3FileToExist(bucket, s3ObjectPath)
 	})
 
 	It("creates IaaS resources from a local terraform source", func() {
@@ -837,6 +870,8 @@ var _ = Describe("Out", func() {
 			Namer:     &namer,
 		}
 		resp, err := runner.Run(outRequest)
+		fmt.Println("--------------------")
+		fmt.Println(resp)
 		Expect(err).ToNot(HaveOccurred(), "Logs: %s", logWriter.String())
 
 		Expect(logWriter.String()).To(ContainSubstring("Apply complete!"))

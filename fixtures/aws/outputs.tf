@@ -1,6 +1,9 @@
 output "env_name" {
     value = "${var.env_name}"
 }
+output "build_id" {
+    value = "${var.build_id}"
+}
 output "bucket" {
     value = "${var.bucket}"
 }

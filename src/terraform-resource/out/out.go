@@ -65,6 +65,9 @@ func (r Runner) Run(req models.OutRequest) (models.OutResponse, error) {
 		return models.OutResponse{}, err
 	}
 	terraformModel.Vars["env_name"] = envName
+	terraformModel.Vars["build_id"] = "sample"
+	// terraformModel.Vars["build_id"] = os.Getenv("BUILD_ID")
+
 
 	terraformModel.PlanFileLocalPath = path.Join(tmpDir, "plan")
 	terraformModel.PlanFileRemotePath = fmt.Sprintf("%s.plan", envName)

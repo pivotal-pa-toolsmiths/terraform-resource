@@ -5,6 +5,7 @@ module "test_module" {
   secret_key = "${var.secret_key}"
   region = "${var.region}"
   env_name = "${var.env_name}"
+  build_id = "${var.build_id}"
 
   bucket = "${var.bucket}"
   object_key = "${var.object_key}"
